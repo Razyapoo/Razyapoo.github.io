@@ -1,0 +1,33 @@
+table {
+    border: solid 1px rgb(0, 0, 0);
+    font-family: Helvetica;
+    border-collapse: collapse;
+}
+
+td, th {
+    border: solid 1px rgb(33, 33, 33);
+    text-align: center;
+}
+
+th {
+    color: #ffffff;
+    background: #6a6969df;
+}
+
+.row {
+    display: flex;
+}
+
+#uwb {
+    width: 60%;
+    margin: 5px;
+}
+
+#camera {
+    flex: 1 1 auto;
+    margin: 5px;
+}
+
+tr:nth-child(even) {
+    background: #e3e3e3;
+}
