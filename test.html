@@ -1,0 +1,85 @@
+<style>
+    .collapsible-group {
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .collapsible-group-content {
+        display: none;
+    }
+
+    .collapsible-group-content.collapsible-group-content--visible {
+        display: table-row;
+    }
+
+    .inner-table {
+        margin-left: 20px;
+        /* Adjust the margin as per your preference */
+        background-color: #f0f0f0;
+        /* Set the desired background color */
+    }
+</style>
+
+<table>
+    <thead>
+        <tr>
+            <th>Header 1</th>
+            <th>Header 2</th>
+            <th>Header 3</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="collapsible-group">
+            <td colspan="3">Group 1</td>
+        </tr>
+        <tr class="collapsible-group-content">
+            <td colspan="3">
+                <table class="inner-table">
+                    <tr>
+                        <td>Row 1 Data 1</td>
+                        <td>Row 1 Data 2</td>
+                        <td>Row 1 Data 3</td>
+                    </tr>
+                    <tr>
+                        <td>Row 2 Data 1</td>
+                        <td>Row 2 Data 2</td>
+                        <td>Row 2 Data 3</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr class="collapsible-group">
+            <td colspan="3">Group 2</td>
+        </tr>
+        <tr class="collapsible-group-content">
+            <td colspan="3">
+                <table class="inner-table">
+                    <tr>
+                        <td>Row 3 Data 1</td>
+                        <td>Row 3 Data 2</td>
+                        <td>Row 3 Data 3</td>
+                    </tr>
+                    <tr>
+                        <td>Row 4 Data 1</td>
+                        <td>Row 4 Data 2</td>
+                        <td>Row 4 Data 3</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    var collapsibleGroups = document.getElementsByClassName('collapsible-group');
+
+    for (var i = 0; i < collapsibleGroups.length; i++) {
+        collapsibleGroups[i].addEventListener('click', function () {
+            var contentRows = this.nextElementSibling;
+            while (contentRows && !contentRows.classList.contains('collapsible-group')) {
+                contentRows.classList.toggle('collapsible-group-content--visible');
+                contentRows = contentRows.nextElementSibling;
+            }
+        });
+    }
+</script>
