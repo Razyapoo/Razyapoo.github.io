@@ -77,6 +77,7 @@ async function fetchData(dataUrls) {
 
 function createEmptyRow(timestamp) {
    const row = document.createElement('tr');
+   row.id = 'emptyRow';
 
    // Index
    const indexElement = document.createElement('td');
@@ -197,17 +198,16 @@ function createPairOfTables(title) {
 function createTable(isUwbTable) {
    
    let headers = {
+      index: isUwbTable ? "Record ID" : "Frame pair ID",
       timestamp: "Timestamp",
       formattedDate: "Timestamp in date format"
    };
 
    if (isUwbTable) {
-      headers.index = "Record ID";
       headers.tagID = "Tag ID";
       headers.anchor101 = "Anchor 101";
       headers.anchor102 = "Anchor 102";
    } else {
-      headers.index = "Frame ID";
       headers.cameraFrame1 = "Frame Camera 1"
       headers.cameraFrame2 = "Frame Camera 2"
    }
@@ -277,7 +277,13 @@ function parseData(rawCameraData, rawUwbData, imagesLeft, imagesRight, title) {
             row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=true, isUwbData=false);
             isHeaderRow = false;
             row.classList.add('group-header');
-            row.addEventListener('click', function () {
+            row.id = `cameraRow${j}`;
+            row.addEventListener('click', function (event) {
+
+               if (event.target.href) {
+                  return;
+               }
+               
                let parent = this.parentNode;
                while (parent && parent.className != "table-container") {
                   parent = parent.parentNode;
@@ -287,26 +293,38 @@ function parseData(rawCameraData, rawUwbData, imagesLeft, imagesRight, title) {
                this.classList.toggle('--active');
 
                const uwbElement1 = parent.querySelector(`#uwbRow${index}`);
-               uwbElement1.classList.toggle('--active');
-            
-               let uwbElement2;
-               if (index - 1 >= 0) {
-                  uwbElement2 = parent.querySelector(`#uwbRow${index - 1}`);
-                  uwbElement2.classList.toggle('--active');
+               if (!uwbElement1.classList.contains('--active')) {
+                  uwbElement1.classList.add('--active');
                }
                
-               let rowInsideGroup = this.nextElementSibling;
-               while (rowInsideGroup && !rowInsideGroup.classList.contains('group-header')) {
-                  rowInsideGroup.classList.toggle('--visible');
-                  rowInsideGroup = rowInsideGroup.nextElementSibling;
+               if (index - 1 >= 0) {
+                  const uwbElement2 = parent.querySelector(`#uwbRow${index - 1}`);
+                  const previousSibling = this.previousSibling;
+                  if (!previousSibling.classList.contains('--visible')) {
+                     uwbElement2.classList.toggle('--active');
+                  }
+               } else {
+                  const emptyRow = parent.querySelector('#emptyRow');
+                  emptyRow.classList.toggle('--active');
                }
+
+               let nextRow = this.nextSibling;
+               while (nextRow && !nextRow.classList.contains('group-header')) {
+                  nextRow.classList.toggle('--visible');
+                  nextRow = nextRow.nextSibling;
+               }
+               
+               if (nextRow && !nextRow.classList.contains('--active') && !this.classList.contains('--active')) {
+                  uwbElement1.classList.remove('--active');
+               }
+               
+
             });
          } else {
             row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=false, isUwbData=false);
             row.classList.add('inside-group');
          }
          // row.classList.add(j);
-         row.id = `cameraRow${j}`;
          cameraTable.append(row);
          i++;
          rawCameraDataArray = rawCameraData[i].split(",");
@@ -334,32 +352,39 @@ function parseData(rawCameraData, rawUwbData, imagesLeft, imagesRight, title) {
       if (isHeaderRow) { 
          row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=true, isUwbData=false);
          isHeaderRow = false;
+         row.id = `cameraRow${j}`;
          row.classList.add('group-header');
-         row.addEventListener('click', function () {
+         row.addEventListener('click', function (event) {
+            if (event.target.href) {
+               return;
+            }
+
             let parent = this.parentNode;
             while (parent && parent.className != "table-container") {
                parent = parent.parentNode;
             }
 
             const index = parseInt(this.id.match(regexID)[1]);
-            // console.log(index);
             this.classList.toggle('--active');
-            let uwbElement;
-            uwbElement = parent.querySelector(`#uwbRow${index - 1}`);
-            uwbElement.classList.toggle('--active');
 
-            let rowInsideGroup = this.nextElementSibling;
-            while (rowInsideGroup && !rowInsideGroup.classList.contains('group-header')) {
-               rowInsideGroup.classList.toggle('--visible');
-               rowInsideGroup = rowInsideGroup.nextElementSibling;
+            const uwbElement = parent.querySelector(`#uwbRow${index - 1}`);
+            const previousSibling = this.previousSibling;
+            if (!previousSibling.classList.contains('--visible')) {
+               uwbElement.classList.toggle('--active');
             }
+
+            let nextRow = this.nextSibling;
+            while (nextRow && !nextRow.classList.contains('group-header')) {
+               nextRow.classList.toggle('--visible');
+               nextRow = nextRow.nextSibling;
+            }
+
          });
       } else {
          row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=false, isUwbData=false);
          row.classList.add('inside-group');
       }
       // row.classList.add(j);
-      row.id = `cameraRow${j}`;
       cameraTable.append(row);
       i++;
       if (rawCameraData[i]) {
