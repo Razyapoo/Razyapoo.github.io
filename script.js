@@ -28,34 +28,48 @@ async function fetchData(dataUrls) {
       return data;
    } 
 
-   const getImageUrls = (folderName) => {
-   
-      const imageUrls = fetch('https://api.github.com/repos/Razyapoo/razyapoo.github.io/git/trees/main?recursive=1')
+   const getImageUrls = (leftImagesFolder, rightImagesFolder) => {
+      const images = fetch('https://api.github.com/repos/Razyapoo/razyapoo.github.io/git/trees/main?recursive=1')
          .then(response => response.json())
          .then(data => {
-            const imageFiles = data.tree.filter(file => file.type === 'blob' && file.path.startsWith(folderName));
 
-            for (let imageFile in imageFiles) {
-               
+            let leftImagesUrls = [];
+            let rightImagesUrls = [];
+            for (let file of data.tree) {
+               if (file.type === 'blob') {
+                  if (file.path.startsWith(leftImagesFolder)) {
+                     leftImagesUrls.push(`https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/${file.path}`)
+                  } else if (file.path.startsWith(rightImagesFolder)) {
+                     rightImagesUrls.push(`https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/${file.path}`)
+                  }
+               }
             }
 
-            const imageUrls = imageFiles.map(file => `https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/${file.path}`);
+            function sortByIndex(first, second) {
+               const firstIndex = parseInt(first.match(/(\d+) - \d+.jpg/)[1]);
+               const secondIndex = parseInt(second.match(/(\d+) - \d+.jpg/)[1]);
 
-            return imageUrls;
+               return firstIndex - secondIndex;
+            }
+
+            leftImagesUrls = leftImagesUrls.sort(sortByIndex);
+            rightImagesUrls = rightImagesUrls.sort(sortByIndex);
+
+            return {leftImagesUrls, rightImagesUrls};
          })
          .catch(error => {
             console.error("Error when fetching image URLs: ", error);
          });
 
-      return imageUrls;   
+      return images;   
    }
 
    for (let experiment in dataUrls) {
       const cameraData = await getData(dataUrls[experiment].cameraDataUrl);
       const uwbData = await getData(dataUrls[experiment].uwbDataUrl);
-      const images = await getImageUrls(dataUrls[experiment].imagesFolder)
+      const images = await getImageUrls(dataUrls[experiment].leftImagesFolder, dataUrls[experiment].rightImagesFolder)
    
-      parseData(cameraData, uwbData, images, dataUrls[experiment].title);
+      parseData(cameraData, uwbData, images.leftImagesUrls, images.rightImagesUrls, dataUrls[experiment].title);
    }
 
 
@@ -85,7 +99,7 @@ function createEmptyRow() {
    return row;
 }
 
-function createRow(data, imageUrls=undefined, isHeader=false, isUwbData=false) {
+function createRow(data, imageLeft=undefined, imageRight=undefined, isHeader=false, isUwbData=false) {
    
    let row = document.createElement('tr');
 
@@ -124,10 +138,17 @@ function createRow(data, imageUrls=undefined, isHeader=false, isUwbData=false) {
       row.append(headerAnchor101);
       row.append(headerAnchor102);
    } else {
-      for (let imageUrl in imageUrls) {
-         const imageElement = document.createElement('a');
-         imageElement.attributes.href = imageUrl;
-         imageElement.textContent = imageUrl;
+      for (let image of [imageLeft, imageRight]) {
+         const imageElement = document.createElement('td');
+         const imageLinkElement = document.createElement('a');
+         imageLinkElement.setAttribute('href', image);
+         imageLinkElement.textContent = image.match(/(\d+ - \d+.jpg)/)[1];
+         imageLinkElement.onclick = (event) => {
+            event.preventDefault();
+            const imageUrl = event.target.href;
+            window.open(imageUrl, '_blank', `width=640, height=360`);
+         }
+         imageElement.append(imageLinkElement);
          row.append(imageElement);
       }
    }
@@ -220,7 +241,7 @@ function createTable(isUwbTable) {
    return div;
 }
 
-function parseData(rawCameraData, rawUwbData, images, title) {
+function parseData(rawCameraData, rawUwbData, imagesLeft, imagesRight, title) {
 
    const tableContainer = createPairOfTables(title);
 
@@ -248,7 +269,7 @@ function parseData(rawCameraData, rawUwbData, images, title) {
       isHeaderRow = true;
       while (cameraTimestamp < uwbTimestamp) {
          if (isHeaderRow) { 
-            row = createRow(rawCameraDataArray, isHeader=true, isUwbData=false);
+            row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=true, isUwbData=false);
             isHeaderRow = false;
             row.classList.add('group-header');
             row.addEventListener('click', function () {
@@ -276,7 +297,7 @@ function parseData(rawCameraData, rawUwbData, images, title) {
                }
             });
          } else {
-            row = createRow(rawCameraDataArray, isHeader=false, isUwbData=false);
+            row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=false, isUwbData=false);
             row.classList.add('inside-group');
          }
          // row.classList.add(j);
@@ -293,7 +314,7 @@ function parseData(rawCameraData, rawUwbData, images, title) {
       }
       isHeaderRow = true;
 
-      row = createRow(rawUwbDataArray, isHeader=false, isUwbData=true);
+      row = createRow(rawUwbDataArray, undefined, undefined, isHeader=false, isUwbData=true);
       // row.classList.add(j);
       row.id = `uwbRow${j}`;
       uwbTable.append(row);
@@ -306,7 +327,7 @@ function parseData(rawCameraData, rawUwbData, images, title) {
       cameraTimestamp = parseInt(rawCameraDataArray[1]);
 
       if (isHeaderRow) { 
-         row = createRow(rawCameraDataArray, isHeader=true, isUwbData=false);
+         row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=true, isUwbData=false);
          isHeaderRow = false;
          row.classList.add('group-header');
          row.addEventListener('click', function () {
@@ -329,7 +350,7 @@ function parseData(rawCameraData, rawUwbData, images, title) {
             }
          });
       } else {
-         row = createRow(rawCameraDataArray, isHeader=false, isUwbData=false);
+         row = createRow(rawCameraDataArray, imagesLeft[i], imagesRight[i], isHeader=false, isUwbData=false);
          row.classList.add('inside-group');
       }
       // row.classList.add(j);
@@ -350,32 +371,37 @@ document.addEventListener('DOMContentLoaded', () => {
    const dataUrls = {
       Experiment1: {
          title: "First Experiment",
-         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt',
-         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt',
-         imagesFolder: 'Experiment 1/images/'
+         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 1/timestamp.txt',
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 1/timestamp_ESP32.txt',
+         leftImagesFolder: 'Experiment 1/images/Left/',
+         rightImagesFolder: 'Experiment 1/images/Right/'
       },
+
       Experiment2: {
          title: "Second Experiment",
-         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt',
-         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt',
-         imagesFolder: 'Experiment 2/images/'
+         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 2/timestamp.txt',
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 2/timestamp_ESP32.txt',
+         leftImagesFolder: 'Experiment 2/images/Left/',
+         rightImagesFolder: 'Experiment 2/images/Right/'
       },
+
       Experiment3: {
          title: "Third Experiment",
-         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp.txt',
-         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp_ESP32.txt',
-         imagesFolder: 'Experiment 3/images/'
+         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 3 (angle)/timestamp.txt',
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 3 (angle)/timestamp_ESP32.txt',
+         leftImagesFolder: 'Experiment 3 (angle)/images/Left/',
+         rightImagesFolder: 'Experiment 3 (angle)/images/Right/'
       }
    }
 
    fetchData(dataUrls)
-   // let cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt';
-   // let uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt';
+   // let cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 1/timestamp.txt';
+   // let uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 1/timestamp_ESP32.txt';
    // let title = "First Experiment";
    // fetchData(cameraDataUrl, uwbDataUrl, title);
 
-   // cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt';
-   // uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt';
+   // cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 2/timestamp.txt';
+   // uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment 2/timestamp_ESP32.txt';
    // title = "Second Experiment";
    // fetchData(cameraDataUrl, uwbDataUrl, title);
    
