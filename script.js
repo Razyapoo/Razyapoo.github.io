@@ -18,21 +18,44 @@ const options = {
 async function fetchData(dataUrls) {
 
 
-   const getData = (APIUrl) => {
+   const getData = (url) => {
    
-      const data = fetch(APIUrl)
+      const data = fetch(url)
          .then(response => response.text())
          // .then(data => data)
          .catch(error => {console.error(error);})
 
       return data;
-   }  
+   } 
+
+   const getImageUrls = (folderName) => {
+   
+      const imageUrls = fetch('https://api.github.com/repos/Razyapoo/razyapoo.github.io/git/trees/main?recursive=1')
+         .then(response => response.json())
+         .then(data => {
+            const imageFiles = data.tree.filter(file => file.type === 'blob' && file.path.startsWith(folderName));
+
+            for (let imageFile in imageFiles) {
+               
+            }
+
+            const imageUrls = imageFiles.map(file => `https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/${file.path}`);
+
+            return imageUrls;
+         })
+         .catch(error => {
+            console.error("Error when fetching image URLs: ", error);
+         });
+
+      return imageUrls;   
+   }
 
    for (let experiment in dataUrls) {
       const cameraData = await getData(dataUrls[experiment].cameraDataUrl);
       const uwbData = await getData(dataUrls[experiment].uwbDataUrl);
+      const images = await getImageUrls(dataUrls[experiment].imagesFolder)
    
-      parseData(cameraData, uwbData, dataUrls[experiment].title);
+      parseData(cameraData, uwbData, images, dataUrls[experiment].title);
    }
 
 
@@ -62,7 +85,7 @@ function createEmptyRow() {
    return row;
 }
 
-function createRow(data, isHeader, isUwbData) {
+function createRow(data, imageUrls=undefined, isHeader=false, isUwbData=false) {
    
    let row = document.createElement('tr');
 
@@ -100,10 +123,16 @@ function createRow(data, isHeader, isUwbData) {
       row.append(tagID);
       row.append(headerAnchor101);
       row.append(headerAnchor102);
+   } else {
+      for (let imageUrl in imageUrls) {
+         const imageElement = document.createElement('a');
+         imageElement.attributes.href = imageUrl;
+         imageElement.textContent = imageUrl;
+         row.append(imageElement);
+      }
    }
 
-
-   if (!isHeader && !isUwbData) {
+   if (!isUwbData && !isHeader) {
       const subRow = row;
       row = document.createElement('tr');
       const tableDataElement = document.createElement('td');
@@ -191,7 +220,7 @@ function createTable(isUwbTable) {
    return div;
 }
 
-function parseData(rawCameraData, rawUwbData, title) {
+function parseData(rawCameraData, rawUwbData, images, title) {
 
    const tableContainer = createPairOfTables(title);
 
@@ -322,17 +351,20 @@ document.addEventListener('DOMContentLoaded', () => {
       Experiment1: {
          title: "First Experiment",
          cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt',
-         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt'
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt',
+         imagesFolder: 'Experiment 1/images/'
       },
       Experiment2: {
          title: "Second Experiment",
          cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt',
-         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt'
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt',
+         imagesFolder: 'Experiment 2/images/'
       },
       Experiment3: {
          title: "Third Experiment",
          cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp.txt',
-         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp_ESP32.txt'
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp_ESP32.txt',
+         imagesFolder: 'Experiment 3/images/'
       }
    }
 
