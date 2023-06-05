@@ -75,26 +75,30 @@ async function fetchData(dataUrls) {
 
 }
 
-function createEmptyRow() {
+function createEmptyRow(timestamp) {
    const row = document.createElement('tr');
 
    // Index
-   const index = document.createElement('td');
+   const indexElement = document.createElement('td');
    
    // Timestamp
-   const timestamp = document.createElement('td');
+   const timestampElement = document.createElement('td');
+   timestampElement.textContent = timestamp;
 
    // Formatted date
-   const formattedDate = document.createElement('td');  
-   const tagID = document.createElement('td');
-   const headerAnchor101 = document.createElement('td');
-   const headerAnchor102 = document.createElement('td');
-   row.append(index);
-   row.append(timestamp);
-   row.append(formattedDate);
-   row.append(tagID);
-   row.append(headerAnchor101);
-   row.append(headerAnchor102);
+   const formattedDateElement = document.createElement('td');  
+   const date = new Date(parseInt(timestamp));
+   formattedDateElement.textContent = date.toLocaleString(undefined, options) + '.' + date.getMilliseconds().toString().padStart(3, '0');
+
+   const tagIDElement = document.createElement('td');
+   const headerAnchor101Element = document.createElement('td');
+   const headerAnchor102Element = document.createElement('td');
+   row.append(indexElement);
+   row.append(timestampElement);
+   row.append(formattedDateElement);
+   row.append(tagIDElement);
+   row.append(headerAnchor101Element);
+   row.append(headerAnchor102Element);
 
    return row;
 }
@@ -172,8 +176,8 @@ function createRow(data, imageLeft=undefined, imageRight=undefined, isHeader=fal
 function createPairOfTables(title) {
    const body = document.querySelector('body');
    const tableContainer = document.createElement('div');
-   const fisrtTable = createTable(true);
-   const secondTable = createTable(false);
+   const fisrtTable = createTable(false);
+   const secondTable = createTable(true);
 
    const titleElement = document.createElement('h2');
    titleElement.textContent = title;
@@ -193,22 +197,23 @@ function createPairOfTables(title) {
 function createTable(isUwbTable) {
    
    let headers = {
-      index: "Index",
       timestamp: "Timestamp",
       formattedDate: "Timestamp in date format"
    };
 
    if (isUwbTable) {
+      headers.index = "Record ID";
       headers.tagID = "Tag ID";
       headers.anchor101 = "Anchor 101";
       headers.anchor102 = "Anchor 102";
    } else {
+      headers.index = "Frame ID";
       headers.cameraFrame1 = "Frame Camera 1"
       headers.cameraFrame2 = "Frame Camera 2"
    }
 
    const div = document.createElement('div');
-   div.className = isUwbTable ? "first-table" : "second-table"
+   div.className = isUwbTable ? "second-table" : "first-table"
    
    const table = document.createElement('table');
    const header = document.createElement('thead');
@@ -308,8 +313,8 @@ function parseData(rawCameraData, rawUwbData, imagesLeft, imagesRight, title) {
          cameraTimestamp = parseInt(rawCameraDataArray[1]);
       }
       if (j == 0) {
-         const row = createEmptyRow();
-         row.className = 'empty';
+         const row = createEmptyRow(uwbTimestamp);
+         // row.className = 'empty';
          uwbTable.append(row);
       }
       isHeaderRow = true;
