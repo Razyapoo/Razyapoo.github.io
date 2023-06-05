@@ -81,6 +81,10 @@ function createRow(data, isHeader, isUwbData) {
    row.append(formattedDate);
    if (isUwbData) {
       // Tag ID
+
+      if (!data[2]) {
+         console.log("do data");
+      }
       const [...tagDataParsed] = data[2].matchAll(regex);
       const tagID = document.createElement('td');
       tagID.textContent = tagDataParsed[0][2];
@@ -133,6 +137,8 @@ function createPairOfTables(title) {
    tableContainer.append(secondTable);
    body.append(titleElement);
    body.append(tableContainer);
+
+   return tableContainer;
 }
 
 function createTable(isUwbTable) {
@@ -188,13 +194,13 @@ function createTable(isUwbTable) {
 
 function parseData(rawCameraData, rawUwbData, title) {
 
-   createPairOfTables(title);
+   const tableContainer = createPairOfTables(title);
 
    rawCameraData = rawCameraData.split("\n");
    rawUwbData = rawUwbData.split("\n");
 
-   const uwbTable = document.getElementById('uwbBody');
-   const cameraTable = document.getElementById('cameraBody');
+   const uwbTable = tableContainer.querySelector('#uwbBody');
+   const cameraTable = tableContainer.querySelector('#cameraBody');
 
    let uwbTimestamp, cameraTimestamp;
    let i = 0; // camera
@@ -206,6 +212,9 @@ function parseData(rawCameraData, rawUwbData, title) {
       let rawCameraDataArray = rawCameraData[i].split(",");
       const rawUwbDataArray = rawUwbData[j].split(",");
 
+      if (!rawCameraDataArray[0] || !rawUwbDataArray[0]) {
+         console.log("no data array");
+      }
       uwbTimestamp = parseInt(rawUwbDataArray[1]);
       cameraTimestamp = parseInt(rawCameraDataArray[1]);
 
@@ -216,20 +225,20 @@ function parseData(rawCameraData, rawUwbData, title) {
             isHeaderRow = false;
             row.classList.add('group-header');
             row.addEventListener('click', function () {
-               let tableContainer = this.parentNode;
-               while (tableContainer && tableContainer.className != "table-container") {
-                  tableContainer = tableContainer.parentNode;
+               let parent = this.parentNode;
+               while (parent && parent.className != "table-container") {
+                  parent = parent.parentNode;
                }
 
                const index = parseInt(this.id.match(regexID)[1]);
                this.classList.toggle('--active');
 
-               const uwbElement1 = tableContainer.querySelector(`#uwbRow${index}`);
+               const uwbElement1 = parent.querySelector(`#uwbRow${index}`);
                uwbElement1.classList.toggle('--active');
             
                let uwbElement2;
                if (index - 1 >= 0) {
-                  uwbElement2 = tableContainer.querySelector(`#uwbRow${index - 1}`);
+                  uwbElement2 = parent.querySelector(`#uwbRow${index - 1}`);
                   uwbElement2.classList.toggle('--active');
                }
                
@@ -274,16 +283,16 @@ function parseData(rawCameraData, rawUwbData, title) {
          isHeaderRow = false;
          row.classList.add('group-header');
          row.addEventListener('click', function () {
-            let tableContainer = this.parentNode;
-            while (tableContainer && tableContainer.className != "table-container") {
-               tableContainer = tableContainer.parentNode;
+            let parent = this.parentNode;
+            while (parent && parent.className != "table-container") {
+               parent = parent.parentNode;
             }
 
             const index = parseInt(this.id.match(regexID)[1]);
             // console.log(index);
             this.classList.toggle('--active');
             let uwbElement;
-            uwbElement = tableContainer.querySelector(`#uwbRow${index - 1}`);
+            uwbElement = parent.querySelector(`#uwbRow${index - 1}`);
             uwbElement.classList.toggle('--active');
 
             let rowInsideGroup = this.nextElementSibling;
@@ -311,9 +320,14 @@ function parseData(rawCameraData, rawUwbData, title) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-   let cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/timestamp.txt';
-   let uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/timestamp_ESP32.txt';
+   let cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt';
+   let uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt';
    let title = "First Experiment";
+   fetchData(cameraDataUrl, uwbDataUrl, title);
+
+   cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt';
+   uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt';
+   title = "Second Experiment";
    fetchData(cameraDataUrl, uwbDataUrl, title);
    
 

@@ -89,4 +89,3 @@
 89,1685796388695,Tag ID: 3 - Anchor ID: 101 Distance: 7.75; Anchor ID: 102 Distance: 7.82
 90,1685796388972,Tag ID: 2 - Anchor ID: 101 Distance: 7.69; Anchor ID: 102 Distance: 7.37
 91,1685796389246,Tag ID: 1 - Anchor ID: 101 Distance: 0.45; Anchor ID: 102 Distance: 1.17
-,,

@@ -411,4 +411,3 @@
 411,1685796812109,Tag ID: 2 - Anchor ID: 101 Distance: 3.03; Anchor ID: 102 Distance: 2.76
 412,1685796812383,Tag ID: 3 - Anchor ID: 101 Distance: 3.93; Anchor ID: 102 Distance: 3.34
 413,1685796812655,Tag ID: 1 - Anchor ID: 101 Distance: 0.40; Anchor ID: 102 Distance: 1.05
-,,
