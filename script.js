@@ -15,23 +15,26 @@ const options = {
          millisecond: "numeric"
       };
 
-async function fetchData(cameraDataUrl, uwbDataUrl, title) {
+async function fetchData(dataUrls) {
 
 
    const getData = (APIUrl) => {
    
       const data = fetch(APIUrl)
          .then(response => response.text())
-         .then(data => data)
+         // .then(data => data)
          .catch(error => {console.error(error);})
 
       return data;
+   }  
+
+   for (let experiment in dataUrls) {
+      const cameraData = await getData(dataUrls[experiment].cameraDataUrl);
+      const uwbData = await getData(dataUrls[experiment].uwbDataUrl);
+   
+      parseData(cameraData, uwbData, dataUrls[experiment].title);
    }
 
-   const cameraData = await getData(cameraDataUrl);
-   const uwbData = await getData(uwbDataUrl);
-
-   parseData(cameraData, uwbData, title);
 
 }
 
@@ -81,10 +84,6 @@ function createRow(data, isHeader, isUwbData) {
    row.append(formattedDate);
    if (isUwbData) {
       // Tag ID
-
-      if (!data[2]) {
-         console.log("do data");
-      }
       const [...tagDataParsed] = data[2].matchAll(regex);
       const tagID = document.createElement('td');
       tagID.textContent = tagDataParsed[0][2];
@@ -198,6 +197,8 @@ function parseData(rawCameraData, rawUwbData, title) {
 
    rawCameraData = rawCameraData.split("\n");
    rawUwbData = rawUwbData.split("\n");
+   rawCameraData.splice(-1);
+   rawUwbData.splice(-1);
 
    const uwbTable = tableContainer.querySelector('#uwbBody');
    const cameraTable = tableContainer.querySelector('#cameraBody');
@@ -212,9 +213,6 @@ function parseData(rawCameraData, rawUwbData, title) {
       let rawCameraDataArray = rawCameraData[i].split(",");
       const rawUwbDataArray = rawUwbData[j].split(",");
 
-      if (!rawCameraDataArray[0] || !rawUwbDataArray[0]) {
-         console.log("no data array");
-      }
       uwbTimestamp = parseInt(rawUwbDataArray[1]);
       cameraTimestamp = parseInt(rawCameraDataArray[1]);
 
@@ -320,15 +318,34 @@ function parseData(rawCameraData, rawUwbData, title) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-   let cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt';
-   let uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt';
-   let title = "First Experiment";
-   fetchData(cameraDataUrl, uwbDataUrl, title);
+   const dataUrls = {
+      Experiment1: {
+         title: "First Experiment",
+         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt',
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt'
+      },
+      Experiment2: {
+         title: "Second Experiment",
+         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt',
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt'
+      },
+      Experiment3: {
+         title: "Third Experiment",
+         cameraDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp.txt',
+         uwbDataUrl: 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%203%20(angle)/timestamp_ESP32.txt'
+      }
+   }
 
-   cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt';
-   uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt';
-   title = "Second Experiment";
-   fetchData(cameraDataUrl, uwbDataUrl, title);
+   fetchData(dataUrls)
+   // let cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp.txt';
+   // let uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%201/timestamp_ESP32.txt';
+   // let title = "First Experiment";
+   // fetchData(cameraDataUrl, uwbDataUrl, title);
+
+   // cameraDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp.txt';
+   // uwbDataUrl = 'https://raw.githubusercontent.com/Razyapoo/razyapoo.github.io/main/Experiment%202/timestamp_ESP32.txt';
+   // title = "Second Experiment";
+   // fetchData(cameraDataUrl, uwbDataUrl, title);
    
 
 })
