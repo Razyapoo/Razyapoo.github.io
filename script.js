@@ -143,11 +143,14 @@ function createRow(data, imageLeft=undefined, imageRight=undefined, isHeader=fal
       row.append(headerAnchor101);
       row.append(headerAnchor102);
    } else {
-      for (let image of [imageLeft, imageRight]) {
+      let z = 0;
+      for (let imagePath of [imageLeft, imageRight]) {
          const imageElement = document.createElement('td');
          const imageLinkElement = document.createElement('a');
-         imageLinkElement.setAttribute('href', image);
-         imageLinkElement.textContent = image.match(/(\d+ - \d+.jpg)/)[1];
+         imageLinkElement.setAttribute('href', imagePath);
+         // add camera side to the label of image
+         const nameToArray = imagePath.match(/(\d+ - \d+)(.jpg)/);
+         imageLinkElement.textContent = nameToArray[1] + (z == 0 ? " left" : " right") + nameToArray[2];
          imageLinkElement.onclick = (event) => {
             event.preventDefault();
             const imageUrl = event.target.href;
@@ -155,6 +158,7 @@ function createRow(data, imageLeft=undefined, imageRight=undefined, isHeader=fal
          }
          imageElement.append(imageLinkElement);
          row.append(imageElement);
+         z++;
       }
    }
 
@@ -208,8 +212,8 @@ function createTable(isUwbTable) {
       headers.anchor101 = "Anchor 101";
       headers.anchor102 = "Anchor 102";
    } else {
-      headers.cameraFrame1 = "Frame Camera 1"
-      headers.cameraFrame2 = "Frame Camera 2"
+      headers.cameraFrame1 = "Left Camera Frame"
+      headers.cameraFrame2 = "Right Camera Frame"
    }
 
    const div = document.createElement('div');
